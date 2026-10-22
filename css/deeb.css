@@ -1,0 +1,120 @@
+/* ==========================================================================
+   deeb.css — هوية منصة الديب (أسود + أحمر ناري + أصفر) مقتبسة من بوستر المنصة.
+   بيتحمّل آخر ملف CSS في كل صفحة، فكل التغييرات هنا فوق باقي الملفات.
+   ========================================================================== */
+:root{
+    --red: #e11d2a; --red-2: #8f0f14; --red-glow: rgba(225,29,42,.45);
+    --dark: #0a0606; --dark-2: #1b0b0b;
+    --gold: #ffc400; --gold-light: #ffd84d; --gold-soft: #ffe9a0;
+    --beige: #120808; --paper: #1c0d0d; --card: #1c0d0d;
+    --text: #f3e9e9; --ink: #f3e9e9; --muted: #bfaaaa; --line: #43191b;
+    --grad-gold: linear-gradient(135deg, #ffe27a 0%, #ffc400 100%);
+    --grad-dark: linear-gradient(150deg, #1b0b0b 0%, #0a0606 100%);
+    --grad-red: linear-gradient(135deg, #ff3b3b 0%, #c8141d 55%, #8f0f14 100%);
+    --shadow-s: 0 4px 14px rgba(0,0,0,.45);
+    --shadow-m: 0 14px 34px rgba(0,0,0,.55);
+    --shadow-l: 0 26px 60px rgba(225,29,42,.28);
+    --heading: 'Lalezar', 'Cairo', sans-serif;
+}
+html{ color-scheme: dark; }
+body{
+    color: var(--text);
+    background:
+        radial-gradient(900px 480px at 85% -8%, rgba(225,29,42,.30), transparent 62%),
+        radial-gradient(700px 420px at 5% 12%, rgba(225,29,42,.14), transparent 60%),
+        #0e0707;
+    background-attachment: fixed;
+}
+main{ background-color: transparent; background-image: none; }
+::selection{ background: var(--red); color: #fff; }
+@supports (scrollbar-width: thin){ html{ scrollbar-width: thin; scrollbar-color: var(--red) #120808; } }
+a:focus-visible, button:focus-visible, input:focus-visible, select:focus-visible, textarea:focus-visible{ outline: 3px solid rgba(255,196,0,.7); }
+
+/* ---------- النافبار والشعار ---------- */
+nav{
+    background: linear-gradient(180deg, #170909 0%, #0a0606 100%);
+    border-bottom: 2px solid var(--red);
+    box-shadow: 0 8px 28px rgba(225,29,42,.30);
+}
+.brand{ flex-direction: row; align-items: center; gap: 10px; text-decoration: none; }
+.brand_logo{ display: block; height: 46px; width: auto; filter: drop-shadow(0 0 8px rgba(225,29,42,.7)); border-radius: 8px; }
+.brand_t{ display: flex; flex-direction: column; line-height: 1.05; }
+.brand_n{ font-family: var(--heading); font-weight: 400; font-size: 34px; letter-spacing: 0; text-shadow: 0 0 14px rgba(225,29,42,.55); }
+.brand_s{ color: #d9b4b4; }
+.link[aria-current="page"]{ color: var(--gold-light); }
+.link:hover{ text-shadow: 0 0 10px rgba(225,29,42,.9); }
+
+/* ---------- العناوين ---------- */
+h1, .text_1, .wow_cta h2, .ac_h1{ font-family: var(--heading); font-weight: 400; letter-spacing: 0; }
+.text_1{ color: #fff; text-shadow: 0 0 18px rgba(225,29,42,.45); }
+.text_2{ color: var(--muted); }
+.hr_red{ font-style: normal; color: #ff2a2a; text-shadow: 0 0 22px rgba(255,42,42,.8); }
+
+/* ---------- الهيرو ---------- */
+.hr_hero{ background: transparent; position: relative; }
+.hr_hero::before{
+    content: ''; position: absolute; inset: 0; pointer-events: none;
+    background: radial-gradient(circle at 78% 30%, rgba(225,29,42,.38), transparent 46%);
+}
+.hr_hero h1{ color: #fff; text-shadow: 0 4px 0 rgba(143,15,20,.9), 0 0 30px rgba(225,29,42,.45); line-height: 1.25; }
+.hr_lead{ color: #ecdcdc; }
+.hr_frame{ border: 2px solid rgba(225,29,42,.75); border-radius: 22px; overflow: hidden; box-shadow: 0 24px 60px rgba(225,29,42,.35); background: #050202; }
+.hr_frame img{ display: block; width: 100%; height: auto; object-fit: cover; }
+.hr_chip{ background: #ffd21f; color: #1a0707; border: 0; font-weight: 800; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
+.hr_btn.g{ background: var(--grad-gold); color: #1a0707; }
+.hr_btn.o{ border: 2px solid var(--red); color: #fff; background: rgba(225,29,42,.12); }
+.hr_btn.o:hover{ background: var(--red); }
+.hr_tag{
+    display: inline-block; background: #ffd21f; color: #1a0707; font-weight: 800; padding: 6px 18px;
+    border-radius: 6px; transform: rotate(-1.2deg); box-shadow: 4px 4px 0 var(--red-2);
+}
+
+/* ---------- كروت ---------- */
+.phase > div, .hr_sc, .wow_ol li, .ac_card, .card, .ac_lesson, .ac_quizcard{
+    background: linear-gradient(160deg, #1d0e0e, #120808);
+    border: 1px solid rgba(225,29,42,.35);
+    color: var(--text);
+}
+.hr_sc i, .wow_n{ color: var(--gold-light); }
+.hr_sc:hover, .phase > div:hover, .card:hover{ border-color: var(--red); box-shadow: 0 12px 34px var(--red-glow); }
+.hr_sc b, .wow_ol li b{ color: #fff; }
+.hr_sc small, .wow_ol li small{ color: var(--muted); }
+.deeb_feats{ margin-top: 28px; }
+.wow_cta{ background: var(--grad-red); color: #fff; border: 0; box-shadow: 0 20px 50px rgba(225,29,42,.35); }
+.wow_cta p{ color: #ffecec; }
+.wow_cta .hr_btn.o{ border-color: #fff; background: rgba(0,0,0,.25); }
+
+/* ---------- الفورم والأزرار ---------- */
+input, select, textarea{ background: #160a0a; color: var(--text); border-color: var(--line); }
+input::placeholder, textarea::placeholder{ color: #8e7676; }
+input:focus, select:focus, textarea:focus{ border-color: var(--red); box-shadow: 0 0 0 3px rgba(225,29,42,.25); }
+.b_dark, .ac_btn.b_dark{ background: var(--grad-red); border-color: var(--red); color: #fff; }
+.b_dark:hover{ box-shadow: 0 8px 24px var(--red-glow); }
+.b_gold{ background: var(--gold); border-color: var(--gold); color: #1a0707; }
+.b_line{ color: var(--text); border-color: var(--line); }
+.ac_bar > span{ background: linear-gradient(90deg, #ff3b3b, #ffc400); }
+.ac_tab[aria-selected="true"], .ac_opt input:checked + span{ background: var(--red); border-color: var(--red); color: #fff; }
+.ac_banner{ background: #2b1a0c; border-color: var(--gold); color: #ffe9a0; }
+.ac_dlg{ background: var(--card); color: var(--text); border: 1px solid var(--red); }
+.ac_dlg::backdrop{ background: rgba(0,0,0,.72); }
+
+/* ---------- الفوتر ---------- */
+.foot{ background: #070303; border-top: 2px solid var(--red); color: #ecdcdc; }
+.foot_3{ color: #1a0707; background: #ffd21f; border-radius: 10px; padding: 8px 18px; font-weight: 800; text-decoration: none; display: inline-block; }
+.foot_3:hover{ background: #fff; }
+
+/* ---------- امتحانات وكورسات (بعد التحويل للغامق) ---------- */
+.cz{ --cz-bg: #0d0606; --cz-card: #240d10; --cz-blue: #d71920; --cz-yellow: #ffd21f; --cz-ink: #fff; }
+
+/* ---------- تصحيحات التباين بعد التحويل للغامق ---------- */
+:root{ --ok: #2a9d55; --ok-bg: #0f2a1a; --bad: #ee5359; --bad-bg: #341214; --skip: #ffc400; --skip-bg: #2b1a0c; }
+.ac_btn, .child10{ color: var(--text); }
+.b_gold, .qz_btn, .qz_opt:has(input:checked) .qz_let, .child11[aria-pressed="true"]{ color: #1a0707; }
+.ac_pill.p_ok, .qz_stat.s_right, .qz_tag.t_right, .qz_perfect, .qz_done .qz_opt.is_right{ color: #7be3a0; }
+.ac_pill.p_bad, .qz_stat.s_wrong, .qz_tag.t_wrong, .qz_done .qz_opt.is_wrong{ color: #ff9a9e; }
+/* كارت امتحان الدرس داخل مشغّل الكورس: كارت فاتح بنص غامق عشان يفضل واضح */
+.cz .ac_quizcard{ background: #fff; color: #1a0707; border: 0; }
+.cz .ac_quizcard .ac_opt span{ background: #fff; color: #1a0707; border-color: #1a0707; }
+.cz .ac_quizcard .ac_opt input:checked + span{ background: #d71920; color: #fff; border-color: #d71920; }
+.cz .ac_quizcard .ac_opt.is_right span{ background: var(--ok); color: #fff; border-color: var(--ok); }
+.cz .ac_quizcard .ac_opt.is_wrong span{ background: var(--bad); color: #fff; border-color: var(--bad); }

@@ -1,0 +1,27 @@
+/* login-scene.css — مشهد الديب في صفحة تسجيل الدخول (صورة واحدة + عيون حمراء بتنبض) */
+.lg_stage{
+    flex: 1; width: min(1100px, 100%); margin: 0 auto;
+    padding: clamp(18px, 4vw, 36px) 16px 48px;
+    display: grid; justify-items: center; align-content: start; gap: 22px;
+}
+.lg_stage > .ac_wrap{ padding: 0; margin: 0 auto; width: min(460px, 100%); flex: none; }
+.lg_scene{
+    position: relative; margin: 0; width: min(100%, 640px);
+    aspect-ratio: 1024 / 630; overflow: hidden; border-radius: 22px; isolation: isolate;
+    background: #050202; box-shadow: 0 24px 60px rgba(215,25,32,.35);
+    outline: 2px solid rgba(215,25,32,.7); outline-offset: -2px;
+}
+.lg_img{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; display: block; animation: lg_zoom 14s ease-in-out infinite; transform-origin: 45% 40%; }
+@keyframes lg_zoom{ 0%, 100%{ transform: scale(1); } 50%{ transform: scale(1.04); } }
+.lg_eye{
+    position: absolute; width: 5%; aspect-ratio: 1; transform: translate(-50%, -50%); border-radius: 50%;
+    background: radial-gradient(circle, rgba(255,40,40,.95) 0, rgba(255,40,40,0) 68%); mix-blend-mode: screen;
+    animation: lg_pulse 2.2s ease-in-out infinite;
+}
+.lg_eye + .lg_eye{ animation-delay: -.6s; }
+@keyframes lg_pulse{ 0%, 100%{ opacity: .35; } 50%{ opacity: 1; } }
+.lg_cap{
+    position: absolute; inset: auto 12px 12px auto; padding: 4px 16px; border-radius: 6px; transform: rotate(-2deg);
+    background: #ffd21f; color: #1a0707; font: 400 22px 'Lalezar', 'Cairo', sans-serif;
+}
+@media (prefers-reduced-motion: reduce){ .lg_img, .lg_eye{ animation: none; } }
