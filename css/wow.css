@@ -192,7 +192,7 @@ main{
 }
 .text{ gap: 10px; }
 .text_1{
-    font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: clamp(26px, 4vw, 40px); font-weight: 700; color: var(--dark);
+    font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: clamp(26px, 4vw, 40px); font-weight: 700; color: var(--text);
     position: relative; padding-bottom: 14px;
 }
 .text_1::before, .text_1::after{ color: var(--gold); font-size: .7em; }
@@ -201,7 +201,7 @@ main{
 .text:has(> .text_1)::after{
     content: ''; display: block; width: 90px; height: 4px; border-radius: 4px; margin: 4px auto 0; background: var(--grad-gold);
 }
-.text_9{ font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: clamp(26px, 4vw, 40px); color: var(--dark); }
+.text_9{ font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: clamp(26px, 4vw, 40px); color: var(--text); }
 
 .phase{ gap: clamp(18px, 3vw, 34px); width: min(1120px, 100%); }
 .child1, .child2, .child3{
@@ -225,7 +225,7 @@ main{
 }
 .child1:hover .icon1, .child2:hover .icon2, .child3:hover .icon3{ transform: rotate(-8deg) scale(1.1); }
 .book{ width: 38px; }
-.text_3, .text_5, .text_7{ font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: 26px; color: var(--dark); }
+.text_3, .text_5, .text_7{ font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: 26px; color: var(--text); }
 .text_4, .text_6, .text_8{ color: var(--muted); font-size: 16px; }
 .arrow{ margin-top: 14px; }
 .arrow_1{
@@ -241,7 +241,7 @@ main{
 }
 .hr_tag{
     grid-column: 1 / -1; text-align: center; font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: clamp(18px, 2.6vw, 28px);
-    color: var(--dark); background: linear-gradient(90deg, transparent, rgba(255,196,0,.22), transparent); padding: 14px 10px; border-radius: 14px;
+    color: var(--text); background: linear-gradient(90deg, transparent, rgba(255,196,0,.22), transparent); padding: 14px 10px; border-radius: 14px;
 }
 .hr_sc{
     position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 8px; text-align: center;
@@ -279,7 +279,7 @@ main{
     width: 56px; height: 56px; display: grid; place-items: center; border-radius: 50%; font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: 28px; font-weight: 700;
     color: #1a0707; background: var(--grad-gold); box-shadow: 0 0 0 7px rgba(255,196,0,.2), 0 8px 18px rgba(255,196,0,.4);
 }
-.wow_ol b{ font-size: 21px; color: var(--dark); }
+.wow_ol b{ font-size: 21px; color: var(--text); }
 .wow_ol small{ color: var(--muted); font-size: 15px; line-height: 1.8; }
 .wow_cta{
     position: relative; isolation: isolate; overflow: hidden; width: min(1120px, 100%); border-radius: 30px; padding: clamp(28px, 5vw, 54px) 20px;
@@ -302,7 +302,7 @@ main{
 }
 aside{ width: 24%; max-width: 330px; padding: 36px 24px 36px 14px; top: 88px; max-height: calc(100vh - 88px); }
 .child10{
-    background: var(--card); border: 0; border-radius: 18px; padding: 14px 16px; font-family: inherit; color: var(--dark);
+    background: var(--card); border: 0; border-radius: 18px; padding: 14px 16px; font-family: inherit; color: var(--text);
     box-shadow: var(--shadow-s); transition: transform .3s var(--ease), box-shadow .3s, background .3s, color .3s;
 }
 .child10:hover{ background: var(--card); transform: translateX(-5px); box-shadow: var(--shadow-m); }
@@ -343,7 +343,7 @@ aside{ width: 24%; max-width: 330px; padding: 36px 24px 36px 14px; top: 88px; ma
 .exam1, .exam2, .exam3{ border-radius: 14px; transition: transform .6s var(--ease); }
 [class^="part"] > div:hover .exam1, [class^="part"] > div:hover .exam2, [class^="part"] > div:hover .exam3{ transform: scale(1.06); }
 img.cvr{ object-fit: cover; }
-.name1, .name2, .name3{ font-size: 17px; color: var(--dark); padding: 12px 6px 6px; position: relative; }
+.name1, .name2, .name3{ font-size: 17px; color: var(--text); padding: 12px 6px 6px; position: relative; }
 .name1::before, .name2::before, .name3::before{
     content: ''; display: block; width: 28px; height: 3px; border-radius: 3px; margin-bottom: 8px; background: var(--grad-gold); transition: width .4s var(--ease);
 }
@@ -351,7 +351,7 @@ img.cvr{ object-fit: cover; }
 .note1, .note2, .note3{ font-size: 14px; }
 .video1, .video2, .video3{ border-radius: 14px; }
 .hd1, .hd2, .hd3{
-    display: flex; align-items: center; gap: 12px; font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: 24px; color: var(--dark); margin: 14px 0 -4px;
+    display: flex; align-items: center; gap: 12px; font-family: 'Reem Kufi', 'Cairo', sans-serif; font-size: 24px; color: var(--text); margin: 14px 0 -4px;
 }
 .hd1::before, .hd2::before, .hd3::before{ content: ''; width: 8px; height: 26px; border-radius: 6px; background: var(--grad-gold); }
 .hint1, .hint2, .hint3{
@@ -390,7 +390,7 @@ body:has(.ac_wrap){
     position: relative; overflow: hidden; border: 0; border-radius: 24px; background: var(--paper); box-shadow: var(--shadow-m);
 }
 .ac_card::before{ content: ''; position: absolute; inset: 0 0 auto 0; height: 5px; background: var(--grad-gold); }
-.ac_h1, .ac_h2{ font-family: 'Reem Kufi', 'Cairo', sans-serif; color: var(--dark); }
+.ac_h1, .ac_h2{ font-family: 'Reem Kufi', 'Cairo', sans-serif; color: var(--text); }
 .ac_h1{ font-size: clamp(26px, 4vw, 36px); }
 .ac_narrow .ac_card{ padding-top: 34px; }
 .ac_form input, .ac_form select, .ac_form textarea, .ac_in{

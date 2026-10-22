@@ -75,7 +75,7 @@ h1, .text_1, .wow_cta h2, .ac_h1{ font-family: var(--heading); font-weight: 400;
     border: 1px solid rgba(225,29,42,.35);
     color: var(--text);
 }
-.hr_sc i, .wow_n{ color: var(--gold-light); }
+
 .hr_sc:hover, .phase > div:hover, .card:hover{ border-color: var(--red); box-shadow: 0 12px 34px var(--red-glow); }
 .hr_sc b, .wow_ol li b{ color: #fff; }
 .hr_sc small, .wow_ol li small{ color: var(--muted); }
@@ -118,3 +118,10 @@ input:focus, select:focus, textarea:focus{ border-color: var(--red); box-shadow:
 .cz .ac_quizcard .ac_opt input:checked + span{ background: #d71920; color: #fff; border-color: #d71920; }
 .cz .ac_quizcard .ac_opt.is_right span{ background: var(--ok); color: #fff; border-color: var(--ok); }
 .cz .ac_quizcard .ac_opt.is_wrong span{ background: var(--bad); color: #fff; border-color: var(--bad); }
+.ac_h1, .ac_h2, .ac_card h1, .ac_card h2, .ac_card label{ color: #fff; }
+
+/* ---------- إصلاح الأيقونات الفاضية ---------- */
+.hr_sc i{ color: #1a0707; background: var(--grad-gold); }
+.icon1, .icon2, .icon3{ background: var(--grad-gold); box-shadow: 0 10px 22px rgba(255,196,0,.35); color: #1a0707; }
+.arrow_1, .arrow_1:hover{ filter: none; background: #ffd21f; box-shadow: 0 8px 18px rgba(255,196,0,.35); }
+.wow_n{ color: #1a0707; background: var(--grad-gold); font-weight: 800; }
