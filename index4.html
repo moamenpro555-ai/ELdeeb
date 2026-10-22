@@ -47,15 +47,6 @@
                         <button id="sub6_4" class="child11">واجب</button>
                     </div>
                 </div>
-                <div class="child8">
-                    <button id="child8" class="child10">ثالثة ثانوي</button>
-                    <div class="sub8">
-                        <button id="sub8_1" class="child11">كورسات</button>
-                        <button id="sub8_2" class="child11">امتحانات</button>
-                        <button id="sub8_3" class="child11">حصص</button>
-                        <button id="sub8_4" class="child11">واجب</button>
-                    </div>
-                </div>
             </aside>
             <div class="line"></div>
 
@@ -106,30 +97,6 @@
                 <div class="part6_3" data-grade="2" data-area="sessions"></div>
                 <div class="part6_4" data-grade="2" data-area="homework"></div>
             </section>
-
-            <!-- ============ ثالثة ثانوي ============ -->
-            <section class="level3">
-                <div class="part8_1" data-grade="3" data-area="courses"></div>
-                <div class="part8_2" data-grade="3" data-area="exams">
-                    <div class="up8_2">
-                        <p class="name3">ابعت ورقة إجابتك للمدرس على الواتساب</p>
-                        <input type="text" class="user3" placeholder="اسمك" maxlength="60">
-                        <input type="file" class="file3" accept="image/*,.pdf">
-                        <button type="button" class="send3">رفع</button>
-                        <p class="note3"></p>
-                    </div>
-                    <h3 class="hd3">امتحانات الشهر</h3>
-                    <div data-kind="month"><a href="exam.html?e=sec_8_7_1"><img src="image/exam.svg" alt="امتحان شهر أكتوبر" class="exam3" loading="lazy"></a><p class="name3">امتحان شهر أكتوبر</p></div>
-                    <div data-kind="month"><a href="exam.html?e=sec_8_7_2"><img src="image/exam.svg" alt="امتحان شهر نوفمبر" class="exam3" loading="lazy"></a><p class="name3">امتحان شهر نوفمبر</p></div>
-                    <div data-kind="month"><a href="exam.html?e=sec_8_7_3"><img src="image/exam.svg" alt="امتحان شهر ديسمبر" class="exam3" loading="lazy"></a><p class="name3">امتحان شهر ديسمبر</p></div>
-                    <h3 class="hd3">امتحانات الحصة</h3>
-                    <div data-kind="session"><a href="exam.html?e=sec_8_8_1"><img src="image/exam.svg" alt="امتحان الحصة الأولى" class="exam3" loading="lazy"></a><p class="name3">امتحان الحصة الأولى</p></div>
-                    <div data-kind="session"><a href="exam.html?e=sec_8_8_2"><img src="image/exam.svg" alt="امتحان الحصة الثانية" class="exam3" loading="lazy"></a><p class="name3">امتحان الحصة الثانية</p></div>
-                    <div data-kind="session"><a href="exam.html?e=sec_8_8_3"><img src="image/exam.svg" alt="امتحان الحصة الثالثة" class="exam3" loading="lazy"></a><p class="name3">امتحان الحصة الثالثة</p></div>
-                </div>
-                <div class="part8_3" data-grade="3" data-area="sessions"></div>
-                <div class="part8_4" data-grade="3" data-area="homework"></div>
-            </section>
         </div>
         <footer class="foot" id="foot_1">
             <p class="foot_2">تواصل معنا</p>
@@ -142,5 +109,9 @@
         <script src="course-cards.js" data-stage="secondary"></script>
         <script src="exam-cards.js" data-stage="secondary"></script>
             <script src="wow.js" defer></script>
+    <script>
+(function(){function go(){var b=document.getElementById(location.hash==='#g2'?'child6':'child4');if(b)b.click();}
+if(location.hash==='#g2'||location.hash==='#g1'){window.addEventListener('load',function(){setTimeout(go,60);});}})();
+</script>
     </body>
 </html>

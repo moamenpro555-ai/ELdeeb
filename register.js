@@ -3,7 +3,7 @@
     var E = window.Aldeeb, h = E.h;
     var root = document.getElementById("ac_reg_root");
     var GOVS = ["القاهرة", "الإسكندرية", "بورسعيد", "السويس", "دمياط", "الدقهلية", "الشرقية", "القليوبية", "كفر الشيخ", "الغربية", "المنوفية", "البحيرة", "الإسماعيلية", "الجيزة", "بني سويف", "الفيوم", "المنيا", "أسيوط", "سوهاج", "قنا", "أسوان", "الأقصر", "البحر الأحمر", "الوادي الجديد", "مطروح", "شمال سيناء", "جنوب سيناء"];
-    var GRADES_BY_STAGE = { primary: [4, 5, 6], prep: [1, 2, 3], secondary: [1, 2, 3] };
+    var GRADES_BY_STAGE = { secondary: [1, 2] };
     // لو الطالب كتب الرقم بكيبورد عربي نحوّله لأرقام إنجليزي
     function latin(s) { return String(s).replace(/[٠-٩]/g, function (d) { return String(d.charCodeAt(0) - 0x0660); }).replace(/[۰-۹]/g, function (d) { return String(d.charCodeAt(0) - 0x06F0); }); }
 
@@ -18,7 +18,7 @@
     var gphone = h("input", { id: "rg_gphone", type: "tel", inputmode: "numeric", dir: "ltr", maxlength: "11", autocomplete: "off", placeholder: "01012345678", required: true });
     var gov = h("select", { id: "rg_gov" }, [option("", "اختار المحافظة")].concat(GOVS.map(function (g) { return option(g, g); })));
     var addr = h("input", { id: "rg_addr", maxlength: "250", autocomplete: "street-address", placeholder: "الشارع - المنطقة - المدينة", required: true });
-    var stage = h("select", { id: "rg_stage" }, [option("", "اختار المرحلة"), option("primary", "ابتدائي"), option("prep", "إعدادي"), option("secondary", "ثانوي")]);
+    var stage = h("select", { id: "rg_stage" }, [option("", "اختار المرحلة"), option("secondary", "ثانوي")]);
     var grade = h("select", { id: "rg_grade", disabled: true }, [option("", "اختار المرحلة الأول")]);
     var email = h("input", { id: "rg_email", dir: "ltr", maxlength: "40", autocomplete: "off", placeholder: "اسمك بالإنجليزي مثلا ahmed.ali", required: true });
     var emailBox = h("div", { class: "ac_emailbox", dir: "ltr" }, [email, h("span", { class: "ac_suffix", text: "@aldeeb.com" })]);

@@ -11,7 +11,7 @@
     var PARTS = { "7": "امتحانات الشهر", "8": "امتحانات الحصة" };
     var MONTHS = ["أكتوبر", "نوفمبر", "ديسمبر"];
     var LESSONS = ["الأولى", "الثانية", "الثالثة"];
-    var BACK_PAGE = { prep: "index3.html", sec: "index4.html" };
+    var BACK_PAGE = { prep: "index4.html", sec: "index4.html" };
 
     var root = document.getElementById("qz_root");
     var dlg = document.getElementById("qz_dlg");
