@@ -20,6 +20,7 @@
         }
         if (id && /^[A-Za-z0-9_-]{6,20}$/.test(id)) return "https://www.youtube-nocookie.com/embed/" + id + "?rel=0&modestbranding=1&playsinline=1";
         if (host === "drive.google.com" && (m = /^\/file\/d\/([A-Za-z0-9_-]+)/.exec(x.pathname))) return "https://drive.google.com/file/d/" + m[1] + "/preview";
+        if ((host === "iframe.mediadelivery.net" || host === "player.mediadelivery.net") && (m = /^\/(?:embed|play)\/(\d+)\/([0-9a-fA-F-]{36})\/?$/.exec(x.pathname))) return "https://iframe.mediadelivery.net/embed/" + m[1] + "/" + m[2] + x.search;
         return null;
     }
     function youtubeId(u) {

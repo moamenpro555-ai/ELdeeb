@@ -44,7 +44,7 @@
     function form(s) {
         var title = h("input", { id: "sv_title", maxlength: "200", value: s ? s.title : "" });
         var desc = h("textarea", { id: "sv_desc", maxlength: "2000" }); desc.value = s ? s.description : "";
-        var url = h("input", { id: "sv_url", dir: "ltr", maxlength: "1000", placeholder: "https://youtu.be/...", value: s ? s.videoRef : "" });
+        var url = h("input", { id: "sv_url", dir: "ltr", maxlength: "1000", placeholder: "https://iframe.mediadelivery.net/embed/LIBRARY_ID/VIDEO_ID", value: s ? s.videoRef : "" });
         var stage = ui.placeStage("sv_stage", s ? s.stage : "secondary");
         var grade = ui.placeGrade("sv_grade", s ? s.grade : 1);
         var pos = h("input", { id: "sv_pos", type: "number", min: "0", max: "100000", value: String(s ? s.position : 0) });
