@@ -41,6 +41,23 @@
         ]);
     }
 
+    // بيصغّر الصورة الكبيرة (أقصى 1280px، JPEG) عشان تدخل تحت حد الرفع (1 ميجا)
+    function shrink(file) {
+        return new Promise(function (resolve) {
+            if (!/^image\/(png|jpeg|webp)$/.test(file.type)) return resolve(null);
+            if (file.size <= 900 * 1024) return resolve(file);
+            var u = URL.createObjectURL(file), img = new Image();
+            img.onload = function () {
+                var k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement("canvas");
+                c.width = Math.round(img.width * k); c.height = Math.round(img.height * k);
+                c.getContext("2d").drawImage(img, 0, 0, c.width, c.height); URL.revokeObjectURL(u);
+                c.toBlob(function (b) { resolve(b); }, "image/jpeg", 0.82);
+            };
+            img.onerror = function () { URL.revokeObjectURL(u); resolve(null); };
+            img.src = u;
+        });
+    }
+
     function form(s) {
         var title = h("input", { id: "sv_title", maxlength: "200", value: s ? s.title : "" });
         var desc = h("textarea", { id: "sv_desc", maxlength: "2000" }); desc.value = s ? s.description : "";
@@ -49,10 +66,27 @@
         var grade = ui.placeGrade("sv_grade", s ? s.grade : 1);
         var pos = h("input", { id: "sv_pos", type: "number", min: "0", max: "100000", value: String(s ? s.position : 0) });
         var pub = h("input", { type: "checkbox", id: "sv_pub" }); pub.checked = s ? s.isPublished : false;
+        var cover = h("input", { type: "file", id: "sv_cover", accept: "image/png,image/jpeg,image/webp" });
+        var coverBox = h("div", null, []);
+        var preview = h("img", { class: "ac_cardimg", alt: "", style: "max-width:260px;display:none" });
+        coverBox.appendChild(preview);
+        if (s && s.hasCover) {
+            E.blobUrl("/api/teacher/sessions/" + s.id + "/cover").then(function (u) { preview.src = u; preview.style.display = "block"; }, function () {});
+            coverBox.appendChild(h("button", { type: "button", class: "ac_btn b_bad b_sm", text: "حذف الصورة الحالية", onclick: function () {
+                run(async function () { await E.call("DELETE", "/api/teacher/sessions/" + s.id + "/cover"); s.hasCover = false; preview.style.display = "none"; E.toast("اتحذفت الصورة"); });
+            } }));
+        }
+        cover.addEventListener("change", function () {
+            var fl = cover.files && cover.files[0];
+            if (!fl) return;
+            preview.src = URL.createObjectURL(fl); preview.style.display = "block";
+        });
+        coverBox.appendChild(cover);
         var msg = h("p", { class: "ac_msg", role: "alert" });
         var f = h("form", { class: "ac_form", novalidate: true }, [].concat(
             field("اسم الحصة", "sv_title", title), field("وصف مختصر (اختياري)", "sv_desc", desc),
             field("رابط الفيديو (يوتيوب أو غيره)", "sv_url", url),
+            field("صورة الحصة (اختياري - PNG أو JPG أو WebP)", "sv_cover", coverBox),
             field("المرحلة", "sv_stage", stage), field("الصف", "sv_grade", grade),
             field("الترتيب (الأصغر الأول)", "sv_pos", pos),
             [h("label", { class: "ac_check" }, [pub, "منشورة (تظهر للطلاب)"]), msg,
@@ -64,7 +98,13 @@
             if (!/^https?:\/\//i.test(url.value.trim())) { msg.textContent = "الصق رابط الفيديو (بيبدأ بـ https://)."; return; }
             var data = { title: title.value.trim(), description: desc.value.trim(), videoRef: url.value.trim(), stage: stage.value, grade: Number(grade.value), position: Number(pos.value) || 0, isPublished: pub.checked };
             try {
-                if (s) await E.call("PATCH", "/api/teacher/sessions/" + s.id, data); else await E.call("POST", "/api/teacher/sessions", data);
+                var res = s ? await E.call("PATCH", "/api/teacher/sessions/" + s.id, data) : await E.call("POST", "/api/teacher/sessions", data);
+                var sid = s ? s.id : res.session.id, fl = cover.files && cover.files[0];
+                if (fl) {
+                    var blob = await shrink(fl);
+                    if (!blob) E.toast("اتحفظت الحصة بس الصورة مش PNG/JPG/WebP");
+                    else { try { await E.upload("PUT", "/api/teacher/sessions/" + sid + "/cover", blob); } catch (er) { E.toast("اتحفظت الحصة بس الصورة ما اترفعتش: " + (er.message || "")); } }
+                }
                 E.toast(s ? "اتحفظت الحصة" : "اتضافت الحصة");
                 await sessionsView();
             } catch (e) { msg.textContent = e.message || "حصل خطأ"; }

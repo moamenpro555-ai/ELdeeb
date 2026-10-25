@@ -59,7 +59,7 @@ h1, .text_1, .wow_cta h2, .ac_h1{ font-family: var(--heading); font-weight: 400;
 .hr_hero h1{ color: #fff; text-shadow: 0 4px 0 rgba(143,15,20,.9), 0 0 30px rgba(225,29,42,.45); line-height: 1.25; }
 .hr_lead{ color: #ecdcdc; }
 .hr_frame{ border: 2px solid rgba(225,29,42,.75); border-radius: 22px; overflow: hidden; box-shadow: 0 24px 60px rgba(225,29,42,.35); background: #050202; }
-.hr_frame img{ display: block; width: 100%; height: auto; object-fit: cover; }
+.hr_frame img{ display: block; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
 .hr_chip{ background: #ffd21f; color: #1a0707; border: 0; font-weight: 800; box-shadow: 0 6px 18px rgba(0,0,0,.5); }
 .hr_btn.g{ background: var(--grad-gold); color: #1a0707; }
 .hr_btn.o{ border: 2px solid var(--red); color: #fff; background: rgba(225,29,42,.12); }
@@ -125,3 +125,8 @@ input:focus, select:focus, textarea:focus{ border-color: var(--red); box-shadow:
 .icon1, .icon2, .icon3{ background: var(--grad-gold); box-shadow: 0 10px 22px rgba(255,196,0,.35); color: #1a0707; }
 .arrow_1, .arrow_1:hover{ filter: none; background: #ffd21f; box-shadow: 0 8px 18px rgba(255,196,0,.35); }
 .wow_n{ color: #1a0707; background: var(--grad-gold); font-weight: 800; }
+
+.hr_frame{ border-radius: 999px 999px 28px 28px; }
+.hr_frame img{ position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: 50% 40%; }
+/* صور الحصص في الكروت */
+.cvr{ object-fit: cover; }

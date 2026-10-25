@@ -34,7 +34,8 @@
     function sessionCard(v, n) {
         var d = el("div"); d.setAttribute("data-session-id", v.id);
         var a = el("a"); a.href = "session.html?id=" + encodeURIComponent(v.id);
-        var img = el("img", "exam" + n); img.alt = v.title; img.loading = "lazy"; img.src = "image/exam.svg";
+        var img = el("img", "exam" + n + (v.hasCover ? " cvr" : "")); img.alt = v.title; img.loading = "lazy";
+        img.src = v.hasCover ? String(window.ALDEEB_API || "").replace(/\/$/, "") + "/api/public/sessions/" + encodeURIComponent(v.id) + "/cover" : "image/exam.svg";
         a.appendChild(img); d.appendChild(a);
         d.appendChild(el("p", "name" + n, v.title));
         d.appendChild(el("p", "note" + n, (v.description ? v.description + " - " : "") + "حصة فيديو. المشاهدة للطلاب المسجّلين."));

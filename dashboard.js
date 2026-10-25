@@ -158,6 +158,7 @@
             if (!d.sessions.length) { card.appendChild(h("p", { class: "ac_empty", text: "مفيش حصص منشورة لصفك دلوقتي." })); return card; }
             card.appendChild(h("div", { class: "ac_grid" }, d.sessions.map(function (v) {
                 return h("a", { class: "ac_course", href: "session.html?id=" + encodeURIComponent(v.id), style: "text-decoration:none" }, [
+                    v.hasCover ? h("img", { class: "ac_cardimg", alt: "", loading: "lazy", src: String(window.ALDEEB_API || "").replace(/\/$/, "") + "/api/public/sessions/" + encodeURIComponent(v.id) + "/cover" }) : null,
                     h("span", { class: "ac_course_t", text: v.title }), v.description ? h("span", { class: "ac_course_m", text: v.description }) : null, h("span", { class: "ac_pill", text: "حصة فيديو" })]);
             })));
         } catch (e) { card.appendChild(h("p", { class: "ac_msg", text: e.message })); }
