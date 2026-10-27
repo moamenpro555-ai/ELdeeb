@@ -1,0 +1,22 @@
+{
+  "name": "منصة الديب التعليمية",
+  "short_name": "الديب",
+  "description": "تعلّم البرمجة لطلاب أولى وتانية ثانوي",
+  "lang": "ar",
+  "dir": "rtl",
+  "start_url": "./dashboard.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#0a0606",
+  "theme_color": "#0a0606",
+  "icons": [
+    { "src": "image/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "image/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "image/icons/icon-maskable-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "image/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ],
+  "shortcuts": [
+    { "name": "حسابي", "url": "./dashboard.html" },
+    { "name": "الدورات", "url": "./index2.html" }
+  ]
+}
