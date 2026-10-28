@@ -1,7 +1,7 @@
 /* sw.js — Service Worker لمنصة الديب.
    القواعد: بنخزّن ملفات الموقع الثابتة بس (نفس الدومين). مفيش API ولا فيديو ولا أي دومين تاني بيتخزّن أبدًا،
    عشان بيانات الطالب والحصص المحمية ما تتسرّبش في كاش الجهاز. */
-var VER = 'deeb-v1';
+var VER = 'deeb-v2';
 var PRECACHE = ['offline.html', 'css/plat.css', 'css/wow.css', 'css/deeb.css', 'image/deeb-logo.webp', 'image/icons/icon-192.png'];
 
 self.addEventListener('install', function (e) {
@@ -23,7 +23,15 @@ self.addEventListener('fetch', function (e) {
     e.respondWith(fetch(req).catch(function () { return caches.match('offline.html'); }));
     return;
   }
-  // CSS/JS/صور/خطوط: من الكاش فورًا وتتحدّث في الخلفية
+  // JS و CSS: النت أولًا (عشان أي تعديل يوصل فورًا)، والكاش بس لو مفيش اتصال
+  if (req.destination === 'script' || req.destination === 'style') {
+    e.respondWith(fetch(req).then(function (res) {
+      if (res && res.ok && res.type === 'basic') { var copy = res.clone(); caches.open(VER).then(function (c) { c.put(req, copy); }); }
+      return res;
+    }).catch(function () { return caches.match(req); }));
+    return;
+  }
+  // الصور والخطوط: من الكاش فورًا وتتحدّث في الخلفية
   e.respondWith(caches.open(VER).then(function (cache) {
     return cache.match(req).then(function (hit) {
       var net = fetch(req).then(function (res) {
