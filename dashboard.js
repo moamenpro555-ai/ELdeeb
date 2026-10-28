@@ -395,6 +395,7 @@
         try {
             var d = await E.call("GET", "/api/lessons/" + encodeURIComponent(l.id) + "/playback");
             var url = safeHttpUrl(d.playback.url);
+            if (d.views) player.insertBefore(h("p", { class: "ac_sub", text: "المشاهدات المتبقية: " + d.views.left + " من " + d.views.max }), holder);
             if (!url) throw { message: "رابط الدرس غير صالح. بلّغ المدرس." };
             if (l.kind === "exam") {
                 holder.replaceWith(h("a", { class: "ac_btn b_gold", href: url, target: "_blank", rel: "noopener", text: "ابدأ الامتحان" }));

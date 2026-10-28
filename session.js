@@ -118,7 +118,8 @@
         var holder = h("p", { class: "ac_empty", text: "بنجهّز الحصة..." });
         root.appendChild(h("div", { class: "ac_card" }, [
             h("div", { class: "ac_top" }, [h("div", null, [h("h1", { class: "ac_h1", text: s.title }), h("p", { class: "ac_sub", text: E.placeLabel(s.stage, s.grade) + " - حصة فيديو" }),
-                s.description ? h("p", { class: "ac_sub", text: s.description }) : null]),
+                s.description ? h("p", { class: "ac_sub", text: s.description }) : null,
+                d.views ? h("p", { class: "ac_sub", text: "المشاهدات المتبقية: " + d.views.left + " من " + d.views.max }) : null]),
                 h("a", { class: "ac_btn b_line", href: "dashboard.html", text: "رجوع" })]),
             holder]));
         try {

@@ -66,6 +66,12 @@
         var grade = ui.placeGrade("sv_grade", s ? s.grade : 1);
         var pos = h("input", { id: "sv_pos", type: "number", min: "0", max: "100000", value: String(s ? s.position : 0) });
         var pub = h("input", { type: "checkbox", id: "sv_pub" }); pub.checked = s ? s.isPublished : false;
+        var maxv = h("input", { id: "sv_maxv", type: "number", min: "0", max: "1000", step: "1", placeholder: "بدون حد", value: s && s.maxViews ? String(s.maxViews) : "", dir: "ltr" });
+        var maxvBox = h("div", null, [maxv, h("p", { class: "ac_sub", text: "سيبه فاضي أو 0 = من غير حد. المشاهدة اللي بيفتحها الطالب تاني خلال 3 ساعات متتحسبش مرة تانية." })]);
+        if (s) maxvBox.appendChild(h("button", { type: "button", class: "ac_btn b_line b_sm", text: "تصفير مشاهدات كل الطلاب", onclick: function () {
+            if (!confirm("كل الطلاب هياخدوا مشاهداتهم تاني لهذه الحصة. متأكد؟")) return;
+            run(async function () { var r = await E.call("DELETE", "/api/teacher/sessions/" + s.id + "/views"); E.toast("اتصفّرت مشاهدات " + (r.reset || 0) + " طالب"); });
+        } }));
         var cover = h("input", { type: "file", id: "sv_cover", accept: "image/png,image/jpeg,image/webp" });
         var coverBox = h("div", null, []);
         var preview = h("img", { class: "ac_cardimg", alt: "", style: "max-width:260px;display:none" });
@@ -86,6 +92,7 @@
         var f = h("form", { class: "ac_form", novalidate: true }, [].concat(
             field("اسم الحصة", "sv_title", title), field("وصف مختصر (اختياري)", "sv_desc", desc),
             field("رابط الفيديو (يوتيوب أو غيره)", "sv_url", url),
+            field("أقصى عدد مشاهدات لكل طالب", "sv_maxv", maxvBox),
             field("صورة الحصة (اختياري - PNG أو JPG أو WebP)", "sv_cover", coverBox),
             field("المرحلة", "sv_stage", stage), field("الصف", "sv_grade", grade),
             field("الترتيب (الأصغر الأول)", "sv_pos", pos),
@@ -96,7 +103,7 @@
             ev.preventDefault(); msg.textContent = "";
             if (!title.value.trim()) { msg.textContent = "اكتب اسم الحصة."; return; }
             if (!/^https?:\/\//i.test(url.value.trim())) { msg.textContent = "الصق رابط الفيديو (بيبدأ بـ https://)."; return; }
-            var data = { title: title.value.trim(), description: desc.value.trim(), videoRef: url.value.trim(), stage: stage.value, grade: Number(grade.value), position: Number(pos.value) || 0, isPublished: pub.checked };
+            var data = { title: title.value.trim(), description: desc.value.trim(), videoRef: url.value.trim(), stage: stage.value, grade: Number(grade.value), position: Number(pos.value) || 0, isPublished: pub.checked, maxViews: Math.max(0, Math.floor(Number(maxv.value) || 0)) };
             try {
                 var res = s ? await E.call("PATCH", "/api/teacher/sessions/" + s.id, data) : await E.call("POST", "/api/teacher/sessions", data);
                 var sid = s ? s.id : res.session.id, fl = cover.files && cover.files[0];

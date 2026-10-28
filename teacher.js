@@ -127,18 +127,25 @@
         function syncMode() { var paid = mode.value === "paid" || mode.value === "code_or_paid"; priceRow.forEach(function (n) { n.style.display = paid ? "" : "none"; }); }
         mode.addEventListener("change", syncMode);
         var pub = h("input", { type: "checkbox", id: "cf_pub" }); pub.checked = c ? c.isPublished : false;
+        var maxv = h("input", { id: "cf_maxv", type: "number", min: "0", max: "1000", step: "1", placeholder: "بدون حد", value: c && c.maxViews ? String(c.maxViews) : "", dir: "ltr" });
+        var maxvBox = h("div", null, [maxv, h("p", { class: "ac_sub", text: "عدد مرات مشاهدة كل فيديو في الكورس للطالب الواحد. سيبه فاضي أو 0 = من غير حد. المشاهدة اللي بيفتحها الطالب تاني خلال 3 ساعات متتحسبش مرة تانية." })]);
+        if (c) maxvBox.appendChild(h("button", { type: "button", class: "ac_btn b_line b_sm", text: "تصفير مشاهدات كل الطلاب", onclick: function () {
+            if (!confirm("كل الطلاب هياخدوا مشاهداتهم تاني لكل دروس الكورس. متأكد؟")) return;
+            run(async function () { var r = await E.call("DELETE", "/api/teacher/courses/" + c.id + "/views"); E.toast("اتصفّرت " + (r.reset || 0) + " مشاهدة"); });
+        } }));
         var msg = h("p", { class: "ac_msg", role: "alert" });
         var form = h("form", { class: "ac_form", novalidate: true }, [].concat(
             field("اسم الكورس", "cf_title", title), field("وصف مختصر (اختياري)", "cf_desc", desc),
             field("المرحلة", "cf_stage", stage), field("الصف", "cf_grade", grade),
             field("القسم اللي هيظهر فيه في صفحة المرحلة", "cf_sect", sect),
             field("طريقة الاشتراك في الكورس", "cf_mode", mode), priceRow,
+            field("أقصى عدد مشاهدات لكل فيديو (للطالب)", "cf_maxv", maxvBox),
             [h("label", { class: "ac_check" }, [pub, "منشور (الكارت بيظهر للكل، والدخول للمشتركين بس)"]), msg,
                 h("button", { type: "submit", class: "ac_btn b_dark", text: c ? "حفظ التعديلات" : "إنشاء الكورس" })]));
         form.addEventListener("submit", async function (ev) {
             ev.preventDefault(); msg.textContent = "";
             if (!title.value.trim()) { msg.textContent = "اكتب اسم الكورس."; return; }
-            var data = { title: title.value.trim(), description: desc.value.trim(), stage: stage.value, grade: Number(grade.value), section: sect.value, accessMode: mode.value, isPublished: pub.checked };
+            var data = { title: title.value.trim(), description: desc.value.trim(), stage: stage.value, grade: Number(grade.value), section: sect.value, accessMode: mode.value, isPublished: pub.checked, maxViews: Math.max(0, Math.floor(Number(maxv.value) || 0)) };
             if (mode.value === "paid" || mode.value === "code_or_paid") { data.price = Number(price.value); if (!(data.price > 0)) { msg.textContent = "حدّد سعر الكورس (أكبر من صفر)."; return; } } else data.price = 0;
             try {
                 if (c) await E.call("PATCH", "/api/teacher/courses/" + c.id, data); else await E.call("POST", "/api/teacher/courses", data);
