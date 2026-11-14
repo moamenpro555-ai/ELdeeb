@@ -230,7 +230,7 @@
     var AR_ANY = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g;
     var MARKS = /[\u064B-\u065F\u0670\u06D6-\u06ED\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
     // حروف PDF العربي غالبًا متشكّلة (ﻟ ﺘ ﻹ). NFKC بيرجعها لحروفها العادية ويفكّ اللام-ألف صح. والتشكيل بنشيله لأنه بيتفصل عن حروفه.
-    function cleanStr(s) { return s.normalize("NFKC").replace(MARKS, ""); }
+    function cleanStr(s) { return s.normalize("NFKC").replace(/[\t\n\r]/g, " ").replace(MARKS, "").replace(/[\u0000-\u001F\u007F\uFFFD]/g, ""); }   // حروف التحكم بترفضها قاعدة البيانات
 
     var LETS = ["أ", "ب", "ج", "د", "هـ"];
     var DIGITS = "[0-9٠-٩]";
