@@ -35,9 +35,9 @@
         box.appendChild(h("div", { class: "ac_card" }, [
             h("div", { class: "ac_top" }, [
                 h("div", null, [h("h2", { class: "ac_h2", text: "الامتحانات" }),
-                    h("p", { class: "ac_sub", text: "اكتب الأسئلة والإجابات هنا وتظهر للطالب بنفس شكل امتحان الحصة (في امتحانات الحصة أو الشهر). أو ارفع ورقة (صور أو PDF) واكتب مفتاح الإجابات وتظهر في قسم «واجب» للمرحلة والصف اللي تحدده." })]),
+                    h("p", { class: "ac_sub", text: "ارفع ملف PDF فيه الأسئلة والإجابات والنظام بيقراها لوحده وتظهر للطالب بنفس شكل امتحان الحصة (في امتحانات الحصة أو الشهر). أو ارفع ورقة (صور أو PDF) واكتب مفتاح الإجابات وتظهر في قسم «واجب» للمرحلة والصف اللي تحدده." })]),
                 h("div", { class: "ac_row" }, [
-                    h("button", { type: "button", class: "ac_btn b_dark", id: "ex_new_typed", text: "امتحان جديد (أكتب الأسئلة)", onclick: function () { typedEditor(box, null); } }),
+                    h("button", { type: "button", class: "ac_btn b_dark", id: "ex_new_typed", text: "امتحان جديد (من ملف PDF)", onclick: function () { typedEditor(box, null); } }),
                     h("button", { type: "button", class: "ac_btn b_line", id: "ex_new_paper", text: "واجب بورقة مرفوعة", onclick: function () { editor(box, null); } })
                 ])
             ])
@@ -165,7 +165,9 @@
     var OPT_RE = /^\s*(\*|✓|✔)?\s*(هـ|[أابجدهa-eA-E])\s*[\)\-\.\:\]]\s*(.*?)\s*(\*|✓|✔)?\s*$/;
     var WHY_RE = /^\s*(?:ال)?شرح\s*[:：]\s*(.*)$/;
     var ANS_RE = /^\s*(?:ال)?إجابة(?:\s+(?:الصح|الصحيحة))?\s*[:：]\s*(هـ|[أابجدهa-eA-E])/;
-    function parseQuestions(text) {
+    var NUM_RE = /^\s*([0-9٠-٩]+)\s*[\)\-\.\:]/;
+    function toInt(t) { return parseInt(String(t).replace(/[٠-٩]/g, function (d) { return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }), 10) || 0; }
+    function parseQuestions(text, pdfMode) {
         var out = [], section = "", cur = null, inWhy = false;
         function flush() { if (cur && (cur.q || cur.options.length)) out.push(cur); cur = null; inWhy = false; }
         text.replace(/\r/g, "").split("\n").forEach(function (raw) {
@@ -180,14 +182,108 @@
                 if (m[1] || m[4]) cur.answer = cur.options.length - 1;
                 return;
             }
-            if (cur && cur.options.length === 0) { cur.q += " " + line; return; }
+            var numbered = NUM_RE.test(line);
+            if (cur && cur.options.length === 0 && !(pdfMode && numbered && cur.q)) { cur.q += " " + line; return; }
+            if (pdfMode && cur && cur.options.length && !numbered) {   // سطر تاني من نفس الاختيار أو الشرح
+                if (inWhy) cur.why += " " + line; else cur.options[cur.options.length - 1] += " " + line;
+                return;
+            }
             flush();
-            cur = { section: section, q: line.replace(/^\s*[0-9٠-٩]+\s*[\)\-\.\:]\s*/, ""), options: [], answer: -1, why: "" };
+            var nm = line.match(NUM_RE);
+            cur = { num: nm ? toInt(nm[1]) : 0, section: section, q: line.replace(/^\s*[0-9٠-٩]+\s*[\)\-\.\:]\s*/, ""), options: [], answer: -1, why: "" };
         });
         flush();
         return out;
     }
 
+    // ---------- قراءة PDF تلقائي (pdf.js بيشتغل في متصفح المدرس، الملف ما بيتبعتش لأي سيرفر) ----------
+    var PDFJS = "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/";
+    var pdfReady = null;
+    function loadPdfJs() {
+        if (pdfReady) return pdfReady;
+        pdfReady = new Promise(function (resolve, reject) {
+            var sc = document.createElement("script");
+            sc.src = PDFJS + "pdf.min.js";
+            sc.onload = function () {
+                // الـ worker لازم يتحمّل من نفس الأصل، فبنجيبه ونعمله Blob
+                fetch(PDFJS + "pdf.worker.min.js").then(function (r) { if (!r.ok) throw new Error("load"); return r.text(); }).then(function (t) {
+                    window.pdfjsLib.GlobalWorkerOptions.workerSrc = URL.createObjectURL(new Blob([t], { type: "text/javascript" }));
+                    resolve(window.pdfjsLib);
+                }).catch(function () { reject(new Error("load")); });
+            };
+            sc.onerror = function () { reject(new Error("load")); };
+            document.head.appendChild(sc);
+        });
+        pdfReady.catch(function () { pdfReady = null; });
+        return pdfReady;
+    }
+    var AR_RE = /[\u0600-\u06FF]/g;
+    var MARK_RE = /(^|\s)(هـ|[أابجده]|[a-eA-E])\s*[\)\-\.]\s+/g;
+    function fixLine(t) {
+        t = t.replace(/\s+/g, " ").trim();
+        t = t.replace(/^[\)\(]\s*(هـ|[أابجده])(?=\s)/, "$1)");                  // ترتيب القوس اتعكس في الـ PDF
+        var marks = t.match(MARK_RE);
+        if (marks && marks.length >= 2) t = t.replace(MARK_RE, "\n$2) ").trim();   // كذا اختيار في سطر واحد
+        return t;
+    }
+    async function pdfToText(file, onPage) {
+        var lib = await loadPdfJs();
+        var pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+        var lines = [];
+        for (var pn = 1; pn <= pdf.numPages; pn++) {
+            if (onPage) onPage(pn, pdf.numPages);
+            var tc = await (await pdf.getPage(pn)).getTextContent();
+            var items = tc.items.filter(function (it) { return it.str && it.str.trim(); }).map(function (it) { return { s: it.str, x: it.transform[4], y: it.transform[5] }; });
+            items.sort(function (a, b) { return b.y - a.y; });
+            var rows = [];
+            items.forEach(function (it) {
+                var r = rows[rows.length - 1];
+                if (r && Math.abs(r.y - it.y) < 4) r.items.push(it); else rows.push({ y: it.y, items: [it] });
+            });
+            rows.forEach(function (r) {
+                var joined = r.items.map(function (i) { return i.s; }).join("");
+                var rtl = (joined.match(AR_RE) || []).length > joined.length / 3;
+                r.items.sort(function (a, b) { return rtl ? b.x - a.x : a.x - b.x; });
+                var t = r.items.map(function (i) { return i.s; }).join(" ");
+                if (!/[^\s\-–—0-9٠-٩]/.test(t)) return;                          // أرقام صفحات
+                fixLine(t).split("\n").forEach(function (l) { if (l.trim()) lines.push(l.trim()); });
+            });
+        }
+        return lines.join("\n");
+    }
+    // مفتاح الإجابات اللي في آخر الملف: «الإجابات: 1-ب 2-أ ...» أو جدول
+    var KEY_HEAD = /^\s*(?:ال)?(?:إجابات|اجابات|مفتاح\s*(?:ال)?(?:إجابة|اجابة|إجابات|اجابات|تصحيح)|نموذج\s*(?:ال)?(?:إجابة|اجابة)|answers?(?:\s*key)?)(?![\u0621-\u064A]).*$/gim;
+    function splitKey(text) {
+        var re = new RegExp(KEY_HEAD.source, "gim"), m, last = -1;
+        while ((m = re.exec(text))) last = m.index;
+        if (last < 0) return { body: text, key: "" };
+        return { body: text.slice(0, last), key: text.slice(last) };
+    }
+    function parseKey(keyText) {
+        var map = {}, n = 0, m;
+        var A = /([0-9٠-٩]{1,3})\s*[\)\-–—:\.=]*\s*(هـ|[أابجده]|[a-eA-E])(?![\u0621-\u064A])/g;
+        while ((m = A.exec(keyText))) { var ix = LET_IDX[m[2].toLowerCase()]; if (ix !== undefined) { map[toInt(m[1])] = ix; n++; } }
+        if (n < 2) {
+            map = {}; n = 0;
+            var B = /(هـ|[أابجده]|[a-eA-E])\s*[\)\-–—:\.=]*\s*([0-9٠-٩]{1,3})(?![0-9٠-٩])/g;
+            while ((m = B.exec(keyText))) { var jx = LET_IDX[m[1].toLowerCase()]; if (jx !== undefined) { map[toInt(m[2])] = jx; n++; } }
+        }
+        return { map: map, count: n };
+    }
+    function parsePdfText(text) {
+        var sp = splitKey(text);
+        var qs = parseQuestions(sp.body, true).filter(function (q) { return q.options.length >= 2; });
+        var key = sp.key ? parseKey(sp.key) : { map: {}, count: 0 };
+        var byOrder = key.count && key.count === qs.length && !qs.some(function (q) { return q.num; });
+        qs.forEach(function (q, i) {
+            if (q.answer >= 0) return;
+            var ix = byOrder ? key.map[i + 1] : (q.num ? key.map[q.num] : undefined);
+            if (ix !== undefined && ix < q.options.length) q.answer = ix;
+        });
+        return { questions: qs, keyFound: key.count > 0 };
+    }
+
+    if (window.__DEEB_TEST__) { window.__DEEB_TEST__.parsePdfText = parsePdfText; window.__DEEB_TEST__.fixLine = fixLine; }
     async function typedEditor(box, id) {
         var d = null;
         if (id) { d = await run(function () { return E.call("GET", "/api/teacher/exams/" + id); }); if (!d) return; }
@@ -249,19 +345,36 @@
         }
         renderList();
 
-        var paste = h("textarea", { id: "tq_paste", class: "tq_paste", placeholder: HELP, rows: "8" });
+        var pdfIn = h("input", { type: "file", id: "tq_pdf", accept: "application/pdf,.pdf", class: "ac_in" });
         var pmsg = h("p", { class: "ac_msg", role: "status" });
+        var readBtn = h("button", { type: "button", class: "ac_btn b_gold", id: "tq_read", text: "اقرأ الأسئلة من الـ PDF" });
+        readBtn.addEventListener("click", async function () {
+            var f = pdfIn.files && pdfIn.files[0];
+            if (!f) { pmsg.textContent = "اختار ملف PDF الأول."; return; }
+            if (f.size > 25 * 1048576) { pmsg.textContent = "الملف كبير (أكتر من 25 MB)."; return; }
+            readBtn.disabled = true; pmsg.textContent = "بقرا الملف...";
+            try {
+                var txt = await pdfToText(f, function (p, n) { pmsg.textContent = "بقرا صفحة " + E.num(p) + " من " + E.num(n) + "..."; });
+                if (txt.replace(/\s/g, "").length < 20) { pmsg.textContent = "الملف ده صور (سكان) ومفيش فيه نص أقدر أقراه. استخدم PDF مكتوب (مش متصوّر)."; return; }
+                var got = parsePdfText(txt);
+                if (!got.questions.length) { pmsg.textContent = "ما لقيتش أسئلة. اتأكد إن كل سؤال تحته اختيارات أ) ب) ج) د)."; return; }
+                got.questions.forEach(function (q) { qs.push(q); });
+                if (!title.value.trim()) title.value = f.name.replace(/\.pdf$/i, "");
+                renderList();
+                var noAns = got.questions.filter(function (q) { return q.answer < 0; }).length;
+                pmsg.textContent = "اتقرأ " + E.num(got.questions.length) + " سؤال." + (noAns ? " " + E.num(noAns) + " سؤال ما لقيتش إجابته في الملف، حدّدها من الأسئلة تحت." : " كل الإجابات اتحدّدت.") + " راجع الأسئلة قبل الحفظ.";
+                pdfIn.value = "";
+            } catch (e) {
+                pmsg.textContent = "ما قدرتش أقرا الملف" + (e && e.message === "load" ? " (محتاج اتصال بالنت لتحميل قارئ الـ PDF)." : ". جرّب ملف تاني.");
+            } finally { readBtn.disabled = false; }
+        });
         var importBox = h("div", { class: "tq_import" }, [
-            h("h3", { class: "ac_h2", text: "الصق الأسئلة دفعة واحدة (أسهل)" }),
-            h("p", { class: "ac_sub", text: "انسخ الأسئلة من ملف Word أو أي مكان والصقها هنا بالشكل اللي تحت، وهتتحوّل لأسئلة تقدر تراجعها." }),
-            paste, pmsg,
-            h("div", { class: "ac_row" }, [h("button", { type: "button", class: "ac_btn b_gold", id: "tq_parse", text: "حوّل لأسئلة", onclick: function () {
-                var got = parseQuestions(paste.value);
-                if (!got.length) { pmsg.textContent = "ما لقيتش أسئلة. اتأكد من الشكل (سؤال ثم اختيارات أ) ب) ج) د))."; return; }
-                var noAns = got.filter(function (q) { return q.answer < 0; }).length, few = got.filter(function (q) { return q.options.length < 2; }).length;
-                got.forEach(function (q) { qs.push(q); });
-                paste.value = ""; renderList();
-                pmsg.textContent = "اتضاف " + E.num(got.length) + " سؤال." + (noAns ? " " + E.num(noAns) + " سؤال محتاج تحدد إجابته الصح." : "") + (few ? " " + E.num(few) + " سؤال اختياراته أقل من اتنين." : "");
+            h("h3", { class: "ac_h2", text: "ارفع ملف الأسئلة (PDF)" }),
+            h("p", { class: "ac_sub", text: "ارفع PDF فيه الأسئلة باختياراتها (أ ب ج د) والإجابات (نجمة * جنب الصح، أو سطر «الإجابة: ب»، أو جدول إجابات في آخر الملف). الأسئلة هتتضاف تحت وتقدر تراجعها وتصحّح أي حاجة قبل الحفظ." }),
+            pdfIn, pmsg,
+            h("div", { class: "ac_row" }, [readBtn, h("button", { type: "button", class: "ac_btn b_line", text: "امسح كل الأسئلة", onclick: async function () {
+                if (!qs.length) return;
+                if (await E.confirmBox("هتمسح كل الأسئلة اللي في الصفحة (قبل الحفظ). متأكد؟", "امسح")) { qs.length = 0; renderList(); }
             } })])
         ]);
 
@@ -303,11 +416,10 @@
         });
 
         E.clear(box);
-        box.appendChild(h("div", { class: "ac_card" }, [h("h2", { class: "ac_h2", text: ex ? "تعديل الامتحان" : "امتحان جديد (أكتب الأسئلة)" }), form]));
+        box.appendChild(h("div", { class: "ac_card" }, [h("h2", { class: "ac_h2", text: ex ? "تعديل الامتحان" : "امتحان جديد (من ملف PDF)" }), form]));
         box.appendChild(h("div", { class: "ac_card" }, [importBox]));
         box.appendChild(h("div", { class: "ac_card" }, [h("div", { class: "ac_top" }, [h("h2", { class: "ac_h2", text: "الأسئلة" }), count]), list,
-            h("div", { class: "ac_row", style: "margin-top:12px" }, [h("button", { type: "button", class: "ac_btn b_gold", id: "tq_add", text: "+ سؤال جديد", onclick: function () { qs.push(blank()); renderList(); var c = list.lastChild; if (c) c.scrollIntoView({ block: "center" }); } })]),
-            saveMsg,
+                        saveMsg,
             h("div", { class: "ac_row" }, [save, h("button", { type: "button", class: "ac_btn b_line", text: "رجوع للقايمة", onclick: function () { examsView(); } })])]));
         if (ex) { var up = h("div", { class: "ac_card" }); box.appendChild(up); await renderUploads(up, ex.id, true); }
         else box.appendChild(h("div", { class: "ac_card" }, [h("p", { class: "ac_sub", text: "بعد الحفظ تقدر ترفع صورة تعريفية للامتحان." })]));
