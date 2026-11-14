@@ -167,9 +167,18 @@
     var ANS_RE = /^\s*(?:ال)?إجابة(?:\s+(?:الصح|الصحيحة))?\s*[:：]\s*(هـ|[أابجدهa-eA-E])/;
     var NUM_RE = /^\s*([0-9٠-٩]+)\s*[\)\-\.\:]/;
     function toInt(t) { return parseInt(String(t).replace(/[٠-٩]/g, function (d) { return "٠١٢٣٤٥٦٧٨٩".indexOf(d); }), 10) || 0; }
+    var PDF_NUM_RE = /^\s*([0-9٠-٩]{1,3})\s*[\)\-\.\:]?\s+(?=[^\d\s])/;
     function parseQuestions(text, pdfMode) {
-        var out = [], section = "", cur = null, inWhy = false;
+        var out = [], section = "", cur = null, inWhy = false, lastNum = 0;
         function flush() { if (cur && (cur.q || cur.options.length)) out.push(cur); cur = null; inWhy = false; }
+        function numOf(line) {
+            if (!pdfMode) { var a = line.match(NUM_RE); return a ? toInt(a[1]) : 0; }
+            var m = line.match(PDF_NUM_RE) || line.match(NUM_RE);
+            if (!m) return 0;
+            var n = toInt(m[1]);
+            if (pdfMode === 2) return n;
+            return (n > lastNum && n <= lastNum + 3 && (lastNum > 0 || n <= 3)) ? n : 0;   // رقم السؤال لازم يكمّل اللي قبله
+        }
         text.replace(/\r/g, "").split("\n").forEach(function (raw) {
             var line = raw.trim();
             if (!line) return;
@@ -182,15 +191,15 @@
                 if (m[1] || m[4]) cur.answer = cur.options.length - 1;
                 return;
             }
-            var numbered = NUM_RE.test(line);
+            var n = numOf(line), numbered = n > 0;
             if (cur && cur.options.length === 0 && !(pdfMode && numbered && cur.q)) { cur.q += " " + line; return; }
             if (pdfMode && cur && cur.options.length && !numbered) {   // سطر تاني من نفس الاختيار أو الشرح
                 if (inWhy) cur.why += " " + line; else cur.options[cur.options.length - 1] += " " + line;
                 return;
             }
             flush();
-            var nm = line.match(NUM_RE);
-            cur = { num: nm ? toInt(nm[1]) : 0, section: section, q: line.replace(/^\s*[0-9٠-٩]+\s*[\)\-\.\:]\s*/, ""), options: [], answer: -1, why: "" };
+            if (n) lastNum = n;
+            cur = { num: n, section: section, q: line.replace(pdfMode ? /^\s*[0-9٠-٩]{1,3}\s*[\)\-\.\:]?\s*/ : /^\s*[0-9٠-٩]+\s*[\)\-\.\:]\s*/, ""), options: [], answer: -1, why: "" };
         });
         flush();
         return out;
@@ -217,62 +226,149 @@
         pdfReady.catch(function () { pdfReady = null; });
         return pdfReady;
     }
-    var AR_RE = /[\u0600-\u06FF]/g;
-    var MARK_RE = /(^|\s)(هـ|[أابجده]|[a-eA-E])\s*[\)\-\.]\s+/g;
-    function fixLine(t) {
-        t = t.replace(/\s+/g, " ").trim();
-        t = t.replace(/^[\)\(]\s*(هـ|[أابجده])(?=\s)/, "$1)");                  // ترتيب القوس اتعكس في الـ PDF
-        var marks = t.match(MARK_RE);
-        if (marks && marks.length >= 2) t = t.replace(MARK_RE, "\n$2) ").trim();   // كذا اختيار في سطر واحد
-        return t;
+
+    var AR_ANY = /[\u0600-\u06FF\u0750-\u077F\uFB50-\uFDFF\uFE70-\uFEFF]/g;
+    var MARKS = /[\u064B-\u065F\u0670\u06D6-\u06ED\u200E\u200F\u202A-\u202E\u2066-\u2069]/g;
+    // حروف PDF العربي غالبًا متشكّلة (ﻟ ﺘ ﻹ). NFKC بيرجعها لحروفها العادية ويفكّ اللام-ألف صح. والتشكيل بنشيله لأنه بيتفصل عن حروفه.
+    function cleanStr(s) { return s.normalize("NFKC").replace(MARKS, ""); }
+
+    var LETS = ["أ", "ب", "ج", "د", "هـ"];
+    var DIGITS = "[0-9٠-٩]";
+    // الاختيارات ساعات بتبقى حرف في دايرة من غير قوس («أ نص ب نص» في سطر واحد). بنفصلها بالترتيب أ ثم ب ثم ج ثم د.
+    // lines = [{t, col}] حيث col = "R" (العمود اليمين / سطر كامل) أو "L" (العمود الشمال). سطر الاختيار اللي اتقسم بيرجع لاختياره حسب العمود.
+    function explodeOptions(lines) {
+        var out = [], expected = 0, rowOpts = [], lastPg = -1, lastY = 0;
+        lines.forEach(function (ln) {
+            var line = ln.t, toks = line.split(/\s+/);
+            var sameRow = ln.pg === lastPg && ln.y === lastY;           // نص السطر اتقسم لعمودين لكنه نفس الصف
+            if (ln.pg !== lastPg || lastY - ln.y > 40) rowOpts = [];   // صفحة جديدة أو فاصل كبير: مش تكملة اختيار
+            lastPg = ln.pg; lastY = ln.y;
+            if (new RegExp("^" + DIGITS + "{1,3}$").test(toks[0]) && toks.length > 1) { expected = 0; rowOpts = []; out.push(line); return; }
+            var seg = [], mine = [], prevRow = rowOpts;
+            toks.forEach(function (tok, i) {
+                var bare = tok.replace(/[\)\.\-:]+$/, "");
+                if (bare === LETS[expected] && i < toks.length - 1 && (expected > 0 || i === 0)) {
+                    if (seg.length) {
+                        if (!mine.length && prevRow.length) out[prevRow[0]] += " " + seg.join(" "); else out.push(seg.join(" "));
+                    }
+                    seg = [LETS[expected] + ")"]; mine.push(out.length); expected++;
+                    out.push("");                                                     // مكان الاختيار (بيتملى لما يخلص)
+                    seg.slot = mine[mine.length - 1];
+                } else seg.push(tok);
+                if (seg.slot !== undefined) out[seg.slot] = seg.join(" ");
+            });
+            if (mine.length) { rowOpts = sameRow ? rowOpts.concat(mine) : mine; return; }
+            // سطر من غير حرف اختيار
+            if (prevRow.length) {
+                var idx = prevRow.length >= 2 && ln.col === "L" ? prevRow[prevRow.length - 1] : prevRow[0];
+                out[idx] += " " + line;
+            } else out.push(line);
+        });
+        return out.filter(function (l) { return l; });
     }
-    async function pdfToText(file, onPage) {
-        var lib = await loadPdfJs();
-        var pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
-        var lines = [];
-        for (var pn = 1; pn <= pdf.numPages; pn++) {
-            if (onPage) onPage(pn, pdf.numPages);
-            var tc = await (await pdf.getPage(pn)).getTextContent();
-            var items = tc.items.filter(function (it) { return it.str && it.str.trim(); }).map(function (it) { return { s: it.str, x: it.transform[4], y: it.transform[5] }; });
+
+    // pages = [ [ {s, x, w, y, fs}, ... ], ... ]  ->  نص بسطور مرتّبة (دالة نقية عشان تتجرّب)
+    function layoutText(pages) {
+        var perPage = pages.map(function (items, pgIdx) {
+            items = items.map(function (it) { return { s: cleanStr(it.s), x: it.x, w: it.w, y: it.y, fs: it.fs || 10 }; })
+                .filter(function (it) { return it.s.trim(); });
+            var ar = 0, tot = 0, minX = Infinity, maxX = -Infinity;
+            items.forEach(function (it) {
+                ar += (it.s.match(AR_ANY) || []).length; tot += it.s.replace(/[\s\d\W]/g, "").length || 0;
+                if (it.x < minX) minX = it.x; if (it.x + it.w > maxX) maxX = it.x + it.w;
+            });
+            var rtl = tot > 0 && ar / tot > 0.4, mid = (minX + maxX) / 2;
             items.sort(function (a, b) { return b.y - a.y; });
             var rows = [];
             items.forEach(function (it) {
                 var r = rows[rows.length - 1];
-                if (r && Math.abs(r.y - it.y) < 4) r.items.push(it); else rows.push({ y: it.y, items: [it] });
+                if (r && Math.abs(r.y - it.y) < Math.max(4, it.fs * 0.55)) r.items.push(it); else rows.push({ y: it.y, items: [it] });
             });
+            var res = [];
             rows.forEach(function (r) {
-                var joined = r.items.map(function (i) { return i.s; }).join("");
-                var rtl = (joined.match(AR_RE) || []).length > joined.length / 3;
-                r.items.sort(function (a, b) { return rtl ? b.x - a.x : a.x - b.x; });
-                var t = r.items.map(function (i) { return i.s; }).join(" ");
-                if (!/[^\s\-–—0-9٠-٩]/.test(t)) return;                          // أرقام صفحات
-                fixLine(t).split("\n").forEach(function (l) { if (l.trim()) lines.push(l.trim()); });
+                r.items.sort(function (a, b) { return rtl ? (b.x + b.w / 2) - (a.x + a.w / 2) : a.x - b.x; });
+                // سطر فيه عمودين (تكملة اختيارين جنب بعض): لو فيه فراغ كبير عند نص الصفحة نقسمه
+                var groups = [[]];
+                r.items.forEach(function (it, i) {
+                    var pv = r.items[i - 1];
+                    if (rtl && pv && pv.x + pv.w / 2 > mid && it.x + it.w / 2 < mid && (pv.x - (it.x + it.w)) > it.fs * 2) groups.push([]);
+                    groups[groups.length - 1].push(it);
+                });
+                var split = groups.length > 1;
+                groups.forEach(function (g, gi) {
+                    var t = "", prev = null;
+                    g.forEach(function (it) {
+                        if (prev) {
+                            var gap = rtl ? prev.x - (it.x + it.w) : it.x - (prev.x + prev.w);
+                            if (gap > it.fs * 0.12 && !/\s$/.test(t) && !/^\s/.test(it.s)) t += " ";
+                        }
+                        t += it.s; prev = it;
+                    });
+                    t = t.replace(/\s+/g, " ").trim();
+                    if (!t || !/[^\s\-–—0-9٠-٩]/.test(t)) return;                 // نشيل سطور أرقام الصفحات
+                    var first = g[0], col = rtl && (split ? gi > 0 : first.x + first.w < mid) ? "L" : "R";
+                    res.push({ t: t, col: col, pg: pgIdx, y: r.y });
+                });
             });
-        }
-        return lines.join("\n");
+            return res;
+        });
+        // سطور متكررة في كل الصفحات تقريبًا (فوتر / هيدر) نشيلها
+        var seen = {};
+        perPage.forEach(function (ls, pi) {
+            var u = {};
+            ls.forEach(function (l) { u[l.t.replace(new RegExp(DIGITS + "+", "g"), "#")] = 1; });
+            Object.keys(u).forEach(function (k) { (seen[k] = seen[k] || {})[pi] = 1; });
+        });
+        var need = Math.max(3, Math.ceil(pages.length * 0.5));
+        var lines = [];
+        perPage.forEach(function (ls) {
+            ls.forEach(function (l) {
+                var k = l.t.replace(new RegExp(DIGITS + "+", "g"), "#");
+                if (pages.length >= 3 && Object.keys(seen[k]).length >= need) return;
+                lines.push(l);
+            });
+        });
+        return explodeOptions(lines).join("\n");
     }
-    // مفتاح الإجابات اللي في آخر الملف: «الإجابات: 1-ب 2-أ ...» أو جدول
-    var KEY_HEAD = /^\s*(?:ال)?(?:إجابات|اجابات|مفتاح\s*(?:ال)?(?:إجابة|اجابة|إجابات|اجابات|تصحيح)|نموذج\s*(?:ال)?(?:إجابة|اجابة)|answers?(?:\s*key)?)(?![\u0621-\u064A]).*$/gim;
+
+    async function pdfToText(file, onPage) {
+        var lib = await loadPdfJs();
+        var pdf = await lib.getDocument({ data: new Uint8Array(await file.arrayBuffer()) }).promise;
+        var pages = [];
+        for (var pn = 1; pn <= pdf.numPages; pn++) {
+            if (onPage) onPage(pn, pdf.numPages);
+            var tc = await (await pdf.getPage(pn)).getTextContent();
+            pages.push(tc.items.filter(function (it) { return it.str && it.str.trim(); }).map(function (it) {
+                var left = it.transform[0] < 0 ? it.transform[4] - it.width : it.transform[4];
+                return { s: it.str, x: left, w: it.width, y: it.transform[5], fs: Math.abs(it.transform[3]) || it.height || 10 };
+            }));
+        }
+        return layoutText(pages);
+    }
+
+    // مفتاح الإجابات اللي في آخر الملف: «نموذج الإجابة» / «الإجابات» / جدول 1-ب 2-أ ...
+    var KEY_HEAD = /^\s*(?:ال)?(?:إجابات|اجابات|مفتاح\s*(?:ال)?(?:إجابة|اجابة|إجابات|اجابات|تصحيح)|نموذج\s*(?:ال)?(?:إجابة|اجابة|إجابات|اجابات)|(?:إجابة|اجابة)\s+(?:ال)?نموذجية|answers?(?:\s*key)?)(?![\u0621-\u064A]).*$/gim;
     function splitKey(text) {
-        var re = new RegExp(KEY_HEAD.source, "gim"), m, last = -1;
-        while ((m = re.exec(text))) last = m.index;
-        if (last < 0) return { body: text, key: "" };
-        return { body: text.slice(0, last), key: text.slice(last) };
+        var re = new RegExp(KEY_HEAD.source, "gim"), m;
+        while ((m = re.exec(text))) { if (m[0].trim().length <= 45) return { body: text.slice(0, m.index), key: text.slice(m.index) }; }
+        return { body: text, key: "" };
     }
     function parseKey(keyText) {
         var map = {}, n = 0, m;
-        var A = /([0-9٠-٩]{1,3})\s*[\)\-–—:\.=]*\s*(هـ|[أابجده]|[a-eA-E])(?![\u0621-\u064A])/g;
+        keyText = keyText.replace(/(?:ص|صفحة)\s*[0-9٠-٩]+/g, " ");               // «ص 4» رقم صفحة المرجع مش رقم سؤال
+        var A = /([0-9٠-٩]{1,3})[ \t]*[\)\-–—:\.=]*[ \t]*(هـ|[أابجده]|[a-eA-E])(?![A-Za-z\u0621-\u064A])/g;
         while ((m = A.exec(keyText))) { var ix = LET_IDX[m[2].toLowerCase()]; if (ix !== undefined) { map[toInt(m[1])] = ix; n++; } }
         if (n < 2) {
             map = {}; n = 0;
-            var B = /(هـ|[أابجده]|[a-eA-E])\s*[\)\-–—:\.=]*\s*([0-9٠-٩]{1,3})(?![0-9٠-٩])/g;
+            var B = /(هـ|[أابجده]|[a-eA-E])[ \t]*[\)\-–—:\.=]*[ \t]*([0-9٠-٩]{1,3})(?![0-9٠-٩])/g;
             while ((m = B.exec(keyText))) { var jx = LET_IDX[m[1].toLowerCase()]; if (jx !== undefined) { map[toInt(m[2])] = jx; n++; } }
         }
         return { map: map, count: n };
     }
     function parsePdfText(text) {
         var sp = splitKey(text);
-        var qs = parseQuestions(sp.body, true).filter(function (q) { return q.options.length >= 2; });
+        var qs = parseQuestions(sp.body, 1).filter(function (q) { return q.options.length >= 2; });
+        if (!qs.length) qs = parseQuestions(sp.body, 2).filter(function (q) { return q.options.length >= 2; });   // ترقيم مش متسلسل
         var key = sp.key ? parseKey(sp.key) : { map: {}, count: 0 };
         var byOrder = key.count && key.count === qs.length && !qs.some(function (q) { return q.num; });
         qs.forEach(function (q, i) {
@@ -282,8 +378,6 @@
         });
         return { questions: qs, keyFound: key.count > 0 };
     }
-
-    if (window.__DEEB_TEST__) { window.__DEEB_TEST__.parsePdfText = parsePdfText; window.__DEEB_TEST__.fixLine = fixLine; }
     async function typedEditor(box, id) {
         var d = null;
         if (id) { d = await run(function () { return E.call("GET", "/api/teacher/exams/" + id); }); if (!d) return; }
